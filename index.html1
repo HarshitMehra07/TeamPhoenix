@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified Learning App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .badge { display: inline-block; margin: 10px; padding: 10px; border: 1px solid #ccc; }
+        .leaderboard { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Smart Rural Education</h1>
+    <button onclick="startChallenge()">Start Interactive Challenge</button>
+    <div id="story"></div>
+    <div id="score">Score: 0</div>
+    <div id="badges">Badges: None</div>
+    <div class="leaderboard">
+        <h2>Leaderboard</h2>
+        <ul id="leaderboardList"></ul>
+    </div>
+
+    <script>
+        let score = 0;
+        let badges = [];
+
+        function startChallenge() {
+            const storyElem = document.getElementById('story');
+            storyElem.innerHTML = '<p>You find a math puzzle. What is 5 + 7?</p>' +
+                '<button onclick="submitAnswer(12)">12</button>' +
+                '<button onclick="submitAnswer(10)">10</button>';
+        }
+
+        function submitAnswer(answer) {
+            if (answer === 12) {
+                score += 10;
+                badges.push('Math Whiz');
+                alert('Correct! +10 points and "Math Whiz" badge earned.');
+            } else {
+                alert('Wrong answer. Try again.');
+            }
+            document.getElementById('score').innerText = 'Score: ' + score;
+            document.getElementById('badges').innerText = 'Badges: ' + badges.join(', ');
+            saveProgress();
+            updateLeaderboard();
+        }
+
+        function saveProgress() {
+            const userData = { score: score, badges: badges };
+            localStorage.setItem('userProgress', JSON.stringify(userData));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('userProgress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                score = data.score;
+                badges = data.badges;
+                document.getElementById('score').innerText = 'Score: ' + score;
+                document.getElementById('badges').innerText = 'Badges: ' + badges.join(', ');
+            }
+        }
+
+        function updateLeaderboard() {
+            let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+            const userEntry = { name: 'Player 1', score: score };
+            leaderboard = leaderboard.filter(entry => entry.name !== 'Player 1');
+            leaderboard.push(userEntry);
+            leaderboard.sort((a, b) => b.score - a.score);
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            const listElem = document.getElementById('leaderboardList');
+            listElem.innerHTML = '';
+            leaderboard.forEach(entry => {
+                const li = document.createElement('li');
+                li.textContent = `${entry.name}: ${entry.score}`;
+                listElem.appendChild(li);
+            });
+        }
+
+        window.onload = () => {
+            loadProgress();
+            updateLeaderboard();
+        };
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(function(reg) {
+                console.log('Service Worker Registered', reg);
+            }).catch(function(err) {
+                console.log('Service Worker registration failed:', err);
+            });
+        }
+    </script>
+</body>
+</html>
